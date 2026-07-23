@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hilliard Collections Per Household Dashboard</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --navy-dark: #163a5c;
+    --trash: #E4572E;
+    --recycle: #2E86AB;
+    --yard: #4C9A2A;
+    --food: #A67C52;
+    --eps: #6A4C93;
+    --bg: #F4F6F8;
+    --card: #FFFFFF;
+    --text: #1B2430;
+    --muted: #6B7684;
+    --border: #E3E7EC;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 28px 36px;
+  }
+  header h1 { margin: 0 0 4px 0; font-size: 22px; }
+  header p { margin: 0; font-size: 13px; color: #cfe0ee; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  .kpi-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .kpi-card {
+    flex: 1 1 220px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--accent, var(--navy));
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .kpi-card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .kpi-card .value { font-size: 28px; font-weight: 700; margin: 4px 0 2px; }
+  .kpi-card .delta { font-size: 12px; }
+  .delta.up { color: #B3261E; }
+  .delta.down { color: #1E8E3E; }
+  .delta.flat { color: var(--muted); }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .panel h2 { margin: 0 0 2px 0; font-size: 15px; }
+  .panel .sub { margin: 0 0 14px 0; font-size: 12px; color: var(--muted); }
+  .chart-box { position: relative; height: 320px; }
+  .chart-box.tall { height: 260px; }
+  .chart-box svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .chart-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 8px; font-size: 12px; color: var(--muted); }
+  .chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .chart-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .bar-rect { transition: opacity .1s ease; }
+  .bar-rect:hover { opacity: .78; }
+  .axis-line { stroke: var(--border); stroke-width: 1; }
+  .grid-line { stroke: #EEF1F4; stroke-width: 1; }
+  .axis-text { fill: var(--muted); font-size: 10px; font-family: Arial, sans-serif; }
+  .axis-title { fill: var(--navy-dark); font-family: Arial, sans-serif; font-weight: 700; }
+  .bar-rect title { pointer-events: none; }
+  .chart-tooltip {
+    position: fixed; pointer-events: none; z-index: 999;
+    background: #1B2430; color: #fff; font-family: Arial, sans-serif;
+    font-size: 12.5px; padding: 6px 10px; border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    opacity: 0; transition: opacity .08s ease; white-space: nowrap;
+  }
+  .chart-tooltip.visible { opacity: 1; }
+  .chart-tooltip .tt-label { font-weight: 700; margin-right: 4px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { background: #EEF3F8; color: var(--navy-dark); font-weight: 700; position: sticky; top: 0; }
+  tbody tr:hover { background: #FAFBFC; }
+  .table-scroll { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+
+  .legend-chip { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  .eps-equiv { background: #F6F3FB; border: 1px solid #E4DAF2; border-left: 4px solid var(--eps); border-radius: 8px; padding: 13px 16px; margin-bottom: 20px; }
+  .eps-equiv .eq-head { font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+  .eps-equiv .eq-head strong { color: var(--eps); }
+  .eq-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+  .eq-item { flex: 1 1 150px; border-left: 1px solid #E4DAF2; padding-left: 12px; }
+  .eq-item:first-child { border-left: none; padding-left: 0; }
+  .eq-item .eq-val { font-size: 21px; font-weight: 700; color: var(--text); }
+  .eq-item .eq-lbl { font-size: 11.5px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+  footer { font-size: 11.5px; color: var(--muted); line-height: 1.6; padding-top: 6px; border-top: 1px solid var(--border); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  details.collapsible > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; color: var(--text); user-select: none; }
+  details.collapsible > summary::-webkit-details-marker { display: none; }
+  details.collapsible > summary::before { content: '▸'; display: inline-block; color: var(--navy); font-size: 13px; transition: transform .15s ease; }
+  details.collapsible[open] > summary::before { transform: rotate(90deg); }
+  details.collapsible > summary .summary-hint { font-size: 11.5px; font-weight: 400; color: var(--muted); }
+  details.collapsible[open] > summary .summary-hint { display: none; }
+</style>
+</head>
+<body>
+<h2 class="sr-only">Dashboard showing City of Hilliard trash, recycling, yard waste, and food waste collected per household each month from January 2025 through June 2026, estimated household counts, and a data table of underlying figures.</h2>
+
+<header>
+  <h1>City of Hilliard — Collections Per Household</h1>
+  <p>Solid waste, recycling &amp; yard waste, pounds per household by month · Jan 2025 – Jun 2026</p>
+</header>
+
+<div class="wrap">
+
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <div class="panel">
+    <h2>Pounds Collected Per Household, by Month</h2>
+    <p class="sub">Trash, recycling and yard waste — converted from tons to pounds and divided by estimated households served</p>
+    <div id="mainLegend" class="chart-legend"></div>
+    <div class="chart-box" id="mainChart"></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h2>Estimated Households Served</h2>
+      <p class="sub">Interpolated between two known invoice periods (see methodology)</p>
+      <div class="chart-box tall" id="hhChart"></div>
+    </div>
+    <div class="panel">
+      <h2>Food Waste &amp; Pumpkin Diversion by Year</h2>
+      <p class="sub">Annual totals diverted from landfill, in tons · 2021–2026 (2026 food waste is year-to-date; pumpkins not yet collected)</p>
+      <div id="foodLegend" class="chart-legend"></div>
+      <div class="chart-box tall" id="foodChart"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <details class="collapsible">
+    <summary><span class="summary-title">Monthly Detail</span><span class="summary-hint">click to expand</span></summary>
+    <p class="sub" style="margin-top:10px;">Tons collected, estimated households, and pounds per household</p>
+    <div class="table-scroll">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Trash (tons)</th>
+            <th>Recycle (tons)</th>
+            <th>Yard Waste (tons)</th>
+            <th>Food Waste (tons)</th>
+            <th>Est. Households</th>
+            <th>Trash (lb/hh)</th>
+            <th>Recycle (lb/hh)</th>
+            <th>Yard Waste (lb/hh)</th>
+            <th>Food Waste (lb/hh)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    </details>
+  </div>
+
+  <div class="panel">
+    <h2>Styrofoam Recycling</h2>
+    <p class="sub">EPS (expanded polystyrene) foam densified via cold-melt and recycled through EcoTrade / Customized Recycling · billed shipments, Jan 2023 – Feb 2026</p>
+    <div class="kpi-row" id="epsKpiRow" style="margin-bottom:14px;"></div>
+    <div id="epsEquiv" class="eps-equiv"></div>
+    <div id="epsLegend" class="chart-legend"></div>
+    <div class="chart-box tall" id="epsChart"></div>
+    <div class="table-scroll" style="margin-top:16px; max-height:340px;">
+      <table id="epsTable">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Bill #</th>
+            <th>Material</th>
+            <th>Weight (lbs)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr style="font-weight:700; background:#EEF3F8;">
+            <td>Total</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td id="epsTotalCell"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <strong>Methodology:</strong> Household counts are known for only two billing periods — Nov-2025 (10,739 = 8,062 RESI + 2,677 SENIOR curb-service units, per LWS invoice #1071703) and May-2026 (10,796 = 8,143 RESI + 2,653 SENIOR, per LWS invoice #1147620). All other months are linearly interpolated/extrapolated at the implied rate of +9.5 households/month, so per-household figures for those months are estimates, not billed counts. Pounds = tons × 2,000, divided by estimated households for that month.
+  </footer>
+</div>
+
+<div id="chartTooltip" class="chart-tooltip"></div>
+
+<script>
+const data = [
+  ["Jan-25",656.43,189.36,3.84,0.40,10644.0],
+  ["Feb-25",628.67,173.84,0.00,0.44,10653.5],
+  ["Mar-25",681.77,181.78,59.74,0.39,10663.0],
+  ["Apr-25",917.94,238.44,283.09,0.52,10672.5],
+  ["May-25",819.19,214.95,218.38,0.46,10682.0],
+  ["Jun-25",754.87,188.81,196.06,0.43,10691.5],
+  ["Jul-25",937.03,243.55,168.09,0.57,10701.0],
+  ["Aug-25",766.49,185.95,165.09,0.51,10710.5],
+  ["Sep-25",882.69,221.68,194.27,0.63,10720.0],
+  ["Oct-25",725.38,179.35,143.27,0.47,10729.5],
+  ["Nov-25",754.78,187.73,241.23,0.45,10739.0],
+  ["Dec-25",950.47,271.61,26.11,0.45,10748.5],
+  ["Jan-26",678.76,191.23,18.24,2.32,10758.0],
+  ["Feb-26",624.99,170.37,0.00,3.10,10767.5],
+  ["Mar-26",899.89,232.56,177.12,4.89,10777.0],
+  ["Apr-26",734.32,191.61,273.96,3.08,10786.5],
+  ["May-26",798.22,212.31,298.25,4.27,10796.0],
+  ["Jun-26",960.75,234.91,268.05,5.05,10805.5],
+];
+
+const rows = data.map(([m,trash,rec,yard,food,hh]) => ({
+  month: m, trash, rec, yard, food, hh,
+  trashLb: trash*2000/hh, recLb: rec*2000/hh, yardLb: yard*2000/hh, foodLb: food*2000/hh
+}));
+
+const labels = rows.map(r => r.month);
+const colors = { trash: '#E4572E', recycle: '#2E86AB', yard: '#4C9A2A', food: '#A67C52' };
+
+// KPI cards (latest month vs prior)
+const last = rows[rows.length-1], prev = rows[rows.length-2];
+const kpis = [
+  { label: 'Trash', val: last.trashLb, prevVal: prev.trashLb, color: colors.trash },
+  { label: 'Recycling', val: last.recLb, prevVal: prev.recLb, color: colors.recycle },
+  { label: 'Yard Waste', val: last.yardLb, prevVal: prev.yardLb, color: colors.yard },
+];
+const kpiRow = document.getElementById('kpiRow');
+kpis.forEach(k => {
+  const diff = k.val - k.prevVal;
+  const pct = (diff/k.prevVal*100);
+  const cls = Math.abs(pct) < 1 ? 'flat' : (diff > 0 ? 'up' : 'down');
+  const arrow = Math.abs(pct) < 1 ? '→' : (diff > 0 ? '▲' : '▼');
+  const div = document.createElement('div');
+  div.className = 'kpi-card';
+  div.style.setProperty('--accent', k.color);
+  div.innerHTML = `<div class="label">${k.label} · ${last.month} (lb/hh)</div>
+    <div class="value">${k.val.toFixed(1)}</div>
+    <div class="delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}% vs ${prev.month}</div>`;
+  kpiRow.appendChild(div);
+});
+
+// ---- Shared hover tooltip for all charts ----
+const tooltipEl = document.getElementById('chartTooltip');
+function showTooltip(evt, label, seriesName, color, valueText) {
+  tooltipEl.innerHTML = `<span class="tt-label" style="color:${color}">${seriesName}</span>${label}: <strong>${valueText}</strong>`;
+  tooltipEl.classList.add('visible');
+  moveTooltip(evt);
+}
+function moveTooltip(evt) {
+  const pad = 14;
+  let x = evt.clientX + pad, y = evt.clientY + pad;
+  const ttW = tooltipEl.offsetWidth || 140, ttH = tooltipEl.offsetHeight || 28;
+  if (x + ttW > window.innerWidth) x = evt.clientX - ttW - pad;
+  if (y + ttH > window.innerHeight) y = evt.clientY - ttH - pad;
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = y + 'px';
+}
+function hideTooltip() { tooltipEl.classList.remove('visible'); }
+
+// ---- Self-contained SVG bar chart renderer (no external libraries) ----
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function niceMax(max) {
+  if (max <= 0) return 1;
+  const pow = Math.pow(10, Math.floor(Math.log10(max)));
+  const n = max / pow;
+  let step;
+  if (n <= 1) step = 1; else if (n <= 2) step = 2; else if (n <= 5) step = 5; else step = 10;
+  return step * pow;
+}
+function drawBarChart(containerId, labels, series, yFmt, opts) {
+  opts = opts || {};
+  const fontSize = opts.fontSize || 10;
+  const container = document.getElementById(containerId);
+  const W = 1040, H = container.classList.contains('tall') ? 260 : 320;
+  const padL = opts.padL || 46, padR = 12, padT = 14, padB = opts.padB || 46;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  // axis range: use explicit min/max + tick values if provided, else auto-scale from 0
+  const bottom = opts.min != null ? opts.min : 0;
+  const top = opts.max != null ? opts.max : niceMax(Math.max(1, ...series.flatMap(s => s.data)) * 1.12);
+  const range = top - bottom;
+  const tickValues = opts.tickValues || [0, 1, 2, 3, 4].map(i => bottom + range * i / 4);
+
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'none' });
+
+  // gridlines + y-axis labels
+  tickValues.forEach((v, i) => {
+    const y = padT + plotH - ((v - bottom) / range) * plotH;
+    svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: y, y2: y, class: i === 0 ? 'axis-line' : 'grid-line' }));
+    const t = el('text', { x: padL - 8, y: y + fontSize * 0.35, class: 'axis-text', 'text-anchor': 'end', style: `font-size:${fontSize}px` });
+    t.textContent = yFmt(v);
+    svg.appendChild(t);
+  });
+
+  // axis unit/title label, rotated along the y-axis
+  if (opts.axisTitle) {
+    const titleFontSize = fontSize + 1;
+    const ty = padT + plotH / 2;
+    const title = el('text', {
+      x: 0, y: 0, class: 'axis-title', 'text-anchor': 'middle',
+      style: `font-size:${titleFontSize}px`,
+      transform: `translate(${14},${ty}) rotate(-90)`
+    });
+    title.textContent = opts.axisTitle;
+    svg.appendChild(title);
+  }
+
+  const n = labels.length;
+  const bandW = plotW / n;
+  const groupPad = bandW * 0.18;
+  const barGap = 2;
+  const barsPerGroup = series.length;
+  const barW = (bandW - groupPad * 2 - barGap * (barsPerGroup - 1)) / barsPerGroup;
+
+  labels.forEach((label, i) => {
+    const bandX = padL + i * bandW;
+    series.forEach((s, si) => {
+      const val = s.data[i];
+      const h = ((val - bottom) / range) * plotH;
+      const x = bandX + groupPad + si * (barW + barGap);
+      const y = padT + plotH - h;
+      const rect = el('rect', { x, y, width: Math.max(barW, 0.5), height: Math.max(h, 0), fill: s.color, rx: 1.5, class: 'bar-rect' });
+      const valueText = yFmt(val);
+      rect.addEventListener('mouseenter', (evt) => showTooltip(evt, label, s.name, s.color, valueText));
+      rect.addEventListener('mousemove', moveTooltip);
+      rect.addEventListener('mouseleave', hideTooltip);
+      svg.appendChild(rect);
+    });
+    // x label (rotated for readability with many months)
+    const lx = bandX + bandW / 2;
+    const lt = el('text', { x: 0, y: 0, class: 'axis-text', 'text-anchor': 'end', style: `font-size:${fontSize}px`, transform: `translate(${lx},${padT + plotH + fontSize + 4}) rotate(-45)` });
+    lt.textContent = label;
+    svg.appendChild(lt);
+  });
+
+  container.innerHTML = '';
+  container.appendChild(svg);
+}
+function drawLegend(containerId, series) {
+  const el2 = document.getElementById(containerId);
+  el2.innerHTML = series.map(s => `<span><i style="background:${s.color}"></i>${s.name}</span>`).join('');
+}
+
+// Main chart: Trash / Recycling / Yard Waste (lb/hh)
+drawLegend('mainLegend', [
+  { name: 'Trash', color: colors.trash },
+  { name: 'Recycling', color: colors.recycle },
+  { name: 'Yard Waste', color: colors.yard },
+]);
+drawBarChart('mainChart', labels, [
+  { name: 'Trash', color: colors.trash, data: rows.map(r => r.trashLb) },
+  { name: 'Recycling', color: colors.recycle, data: rows.map(r => r.recLb) },
+  { name: 'Yard Waste', color: colors.yard, data: rows.map(r => r.yardLb) },
+], v => v.toFixed(0));
+
+// Households chart — fixed scale 7,500-15,000 (in 1,500 steps) and larger labels so month-to-month
+// changes (only ~150 households) read clearly against a full, honest axis
+drawBarChart('hhChart', labels, [
+  { name: 'Est. Households', color: '#1F4E78', data: rows.map(r => r.hh) },
+], v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), {
+  min: 10000, max: 11000,
+  tickValues: [10000, 10200, 10400, 10600, 10800, 11000],
+  fontSize: 13,
+  padL: 78,
+  axisTitle: 'Households'
+});
+
+// Food waste & pumpkin diversion — yearly totals converted from pounds to tons
+const foodYears = ['2021', '2022', '2023', '2024', '2025', '2026 YTD'];
+const pumpkinTons  = [4.4, 21.0, 21.87, 16.57, 12.895, 0];   // 8,800 / 42,000 / 43,740 / 33,140 / 25,790 lbs; 2026 not yet collected
+// 2026 food waste = year-to-date sum of the Food Waste (tons) column from the monthly detail
+const food2026Ytd = rows.filter(r => r.month.endsWith('-26')).reduce((s, r) => s + r.food, 0);
+const foodWasteTons = [12.845, 18.299, 20.744, 20.0, 20.0, food2026Ytd]; // 25,691 / 36,597 / 41,488 / 40,000 / 40,000 lbs; 2026 from monthly detail
+const pumpkinColor = '#E8871E';
+const foodWasteColor = '#3A9E3A';
+drawLegend('foodLegend', [
+  { name: 'Pumpkins', color: pumpkinColor },
+  { name: 'Food Waste', color: foodWasteColor },
+]);
+drawBarChart('foodChart', foodYears, [
+  { name: 'Pumpkins', color: pumpkinColor, data: pumpkinTons },
+  { name: 'Food Waste', color: foodWasteColor, data: foodWasteTons },
+], v => v.toFixed(0), {
+  fontSize: 15,
+  padL: 52,
+  padB: 46,
+  min: 0, max: 30,
+  tickValues: [0, 5, 10, 15, 20, 25, 30],
+  axisTitle: 'Tons'
+});
+
+// Table
+const tbody = document.querySelector('#dataTable tbody');
+rows.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${r.month}</td><td>${r.trash.toFixed(2)}</td><td>${r.rec.toFixed(2)}</td>
+    <td>${r.yard.toFixed(2)}</td><td>${r.food.toFixed(2)}</td><td>${r.hh.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+    <td>${r.trashLb.toFixed(1)}</td><td>${r.recLb.toFixed(1)}</td><td>${r.yardLb.toFixed(1)}</td><td>${r.foodLb.toFixed(2)}</td>`;
+  tbody.appendChild(tr);
+});
+
+// ---- Styrofoam (EPS Cold Melt) recycling — billed shipments from EcoTrade Activity Report ----
+// Each row: [type, date, bill #, material, weight in lbs]. Sorted chronologically by ship date.
+const epsData = [
+  ["Bill", "2/27/2023",  "ET1538", "EPS Cold Melt",  8568],
+  ["Bill", "11/21/2023", "6229",   "EPS Cold Melt",  7105],
+  ["Bill", "2/28/2024",  "ET1827", "EPS Cold Melt",  6296],
+  ["Bill", "5/20/2024",  "ET1875", "EPS Cold Melt",  6332],
+  ["Bill", "5/22/2024",  "72523",  "EPS Cold Melt",  8912],
+  ["Bill", "9/16/2024",  "ET1975", "EPS Cold Melt",  9714],
+  ["Bill", "3/12/2025",  "ET2131", "EPS Cold Melt", 12694],
+  ["Bill", "9/16/2025",  "ET2335", "EPS Cold Melt", 12789],
+  ["Bill", "5/27/2026",  "ET2618", "EPS Cold Melt", 17428],
+];
+
+const epsTotalLbs = epsData.reduce((s, r) => s + r[4], 0);
+const epsShipments = epsData.length;
+const epsLatest = epsData[epsData.length - 1];
+
+// Short axis labels like "Feb '23"
+const monthAbbr = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function epsLabel(dateStr) {
+  const [m, , y] = dateStr.split("/");
+  return `${monthAbbr[parseInt(m,10)-1]} '${y.slice(-2)}`;
+}
+const epsLabels = epsData.map(r => epsLabel(r[1]));
+
+// KPI cards for Styrofoam
+const epsKpis = [
+  { label: 'Total EPS Recycled', value: (epsTotalLbs).toLocaleString() + ' lbs', sub: `≈ ${(epsTotalLbs/2000).toFixed(1)} tons diverted` },
+  { label: 'CO₂ Conserved', value: '38.9 metric tons', sub: 'Emissions avoided, 2023–2026' },
+  { label: 'Largest Shipment', value: epsLatest[4].toLocaleString() + ' lbs', sub: `${epsLatest[1]} · Bill ${epsLatest[2]}` },
+];
+const epsKpiRow = document.getElementById('epsKpiRow');
+epsKpis.forEach(k => {
+  const div = document.createElement('div');
+  div.className = 'kpi-card';
+  div.style.setProperty('--accent', getComputedStyle(document.documentElement).getPropertyValue('--eps'));
+  div.innerHTML = `<div class="label">${k.label}</div>
+    <div class="value">${k.value}</div>
+    <div class="delta flat">${k.sub}</div>`;
+  epsKpiRow.appendChild(div);
+});
+
+// CO2 equivalents band (from the Environmental Impact Report, page 1)
+const epsEquiv = [
+  { val: '113',    lbl: 'barrels of oil consumed over a year' },
+  { val: '764',    lbl: 'tree seedlings grown over 10 years' },
+  { val: '5,187',  lbl: 'gallons of gasoline consumed per year' },
+  { val: '50,758', lbl: 'pounds of coal burned per year' },
+];
+document.getElementById('epsEquiv').innerHTML =
+  `<div class="eq-head">Those <strong>38.9 metric tons of CO₂</strong> conserved are roughly equal to:</div>
+   <div class="eq-grid">` +
+   epsEquiv.map(e => `<div class="eq-item"><div class="eq-val">${e.val}</div><div class="eq-lbl">${e.lbl}</div></div>`).join('') +
+   `</div>`;
+
+// Styrofoam chart — lbs per billed shipment
+const epsColor = getComputedStyle(document.documentElement).getPropertyValue('--eps').trim() || '#6A4C93';
+drawLegend('epsLegend', [{ name: 'EPS Cold Melt (lbs per shipment)', color: epsColor }]);
+drawBarChart('epsChart', epsLabels, [
+  { name: 'EPS Cold Melt', color: epsColor, data: epsData.map(r => r[4]) },
+], v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), {
+  fontSize: 13,
+  padL: 62,
+  padB: 56,
+  axisTitle: 'Pounds'
+});
+
+// Styrofoam table
+const epsTbody = document.querySelector('#epsTable tbody');
+epsData.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4].toLocaleString()}</td>`;
+  epsTbody.appendChild(tr);
+});
+document.getElementById('epsTotalCell').textContent = epsTotalLbs.toLocaleString();
+</script>
+</body>
+</html>
