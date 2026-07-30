@@ -131,7 +131,7 @@ details.collapsible[open] > summary .summary-hint { display: none; }
 
 <div class="panel">
 <h2>Hilliard's Diversion Rate vs Peer Communities</h2>
-<p class="sub">Share of collected material diverted from the landfill — (recycling + yard waste + food waste + brush &amp; leaf + Styrofoam) ÷ all material collected. Hilliard 2025 and 2026 are calculated live from this dashboard's data; peer communities are 2024 reported figures.</p>
+<p class="sub">Share of collected material diverted from the landfill — (recycling + yard waste + food waste + pumpkins + brush &amp; leaf + Styrofoam) ÷ all material collected. Hilliard 2025 and 2026 are calculated live from this dashboard's data; peer communities are 2024 reported figures.</p>
 <div id="divCallout" class="eps-equiv" style="border-left-color: var(--yard); background:#F1F7EE; border-color:#DBEAD2;"></div>
 <div id="divLegend" class="chart-legend"></div>
 <div class="chart-box tall" id="divChart"></div>
@@ -553,7 +553,9 @@ const rec = yr.reduce((s, r) => s + r.rec, 0);
 const yard = yr.reduce((s, r) => s + r.yard, 0);
 const food = yr.reduce((s, r) => s + r.food, 0);
 const eps = epsData.filter(r => r[1].split('/')[2] === '20' + yy).reduce((s, r) => s + r[4], 0) / 2000;
-const diverted = rec + yard + food + brushTons + eps;
+const pIdx = foodYears.findIndex(y => y.startsWith('20' + yy));
+const pumpkins = pIdx >= 0 ? pumpkinTons[pIdx] : 0;
+const diverted = rec + yard + food + pumpkins + brushTons + eps;
 const total = diverted + trash;
 return { diverted, trash, total, rate: total > 0 ? diverted / total : 0 };
 }
