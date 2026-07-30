@@ -131,7 +131,7 @@ details.collapsible[open] > summary .summary-hint { display: none; }
 
 <div class="panel">
 <h2>Hilliard's Diversion Rate vs Peer Communities</h2>
-<p class="sub">Share of collected material diverted from the landfill — (recycling + yard waste + food waste + pumpkins + brush &amp; leaf + Styrofoam) ÷ all material collected. Hilliard 2025 and 2026 are calculated live from this dashboard's data; peer communities are 2024 reported figures.</p>
+<p class="sub">Share of collected material diverted from the landfill — (recycling + yard waste + food waste + pumpkins + brush &amp; leaf + Styrofoam) ÷ all material collected. Hilliard 2025 and 2026 are calculated live from this dashboard's data; Hilliard 2024 uses the city's provided annual totals; peer communities are 2024 reported figures.</p>
 <div id="divCallout" class="eps-equiv" style="border-left-color: var(--yard); background:#F1F7EE; border-color:#DBEAD2;"></div>
 <div id="divLegend" class="chart-legend"></div>
 <div class="chart-box tall" id="divChart"></div>
@@ -564,6 +564,18 @@ const d2026 = yearDiversion('26', brushTotal);   // brush & leaf program runs in
 const d2025 = yearDiversion('25', 0);            // no brush & leaf program in 2025
 const hilliard2026Rate = d2026.rate;
 const hilliard2025Rate = d2025.rate;
+// Hilliard 2024 — city-provided annual totals (dashboard monthly data starts 2025); same formula.
+const d2024 = (function () {
+const rec = 2611.76, yard = 1804.93, trash = 9618.35;   // city-provided 2024 totals (tons)
+const pIdx = foodYears.indexOf('2024');
+const food = pIdx >= 0 ? foodWasteTons[pIdx] : 0;
+const pumpkins = pIdx >= 0 ? pumpkinTons[pIdx] : 0;
+const eps = epsData.filter(r => r[1].split('/')[2] === '2024').reduce((s, r) => s + r[4], 0) / 2000;
+const diverted = rec + yard + food + pumpkins + eps;    // no brush & leaf program in 2024
+const total = diverted + trash;
+return { diverted, trash, total, rate: total > 0 ? diverted / total : 0 };
+})();
+const hilliard2024Rate = d2024.rate;
 
 // Community diversion rates with a distinct color per community.
 // Hilliard (both years) shown first, then peers by descending rate.
@@ -575,6 +587,7 @@ const GAHANNA_LTBLUE = '#6BAED6';
 const communities = [
 { name: 'Hilliard', year: 2026, rate: hilliard2026Rate, color: HILLIARD_BLUE },
 { name: 'Hilliard', year: 2025, rate: hilliard2025Rate, color: HILLIARD_BLUE },
+{ name: 'Hilliard', year: 2024, rate: hilliard2024Rate, color: HILLIARD_BLUE },
 { name: 'Dublin', year: 2024, rate: 0.24, color: DUBLIN_GREEN },
 { name: 'Upper Arlington', year: 2024, rate: 0.22, color: UA_YELLOW },
 { name: 'Westerville', year: 2024, rate: 0.18, color: WESTERVILLE_RED },
