@@ -266,19 +266,21 @@ const colors = { trash: '#E4572E', recycle: '#2E86AB', yard: '#4C9A2A', food: '#
 // Brush & leaf pick-up tonnage by month (2026 chipper season, estimated at 600 lbs/CY)
 const brushByMonth = { 'Apr-26': 18.15, 'May-26': 16.20, 'Jun-26': 24.60 };
 
-// KPI cards (latest month vs the same month one year earlier).
-// Each row's lb/hh value already divides that month's tonnage by that month's own
-// household count (trashLb = trash*2000/hh), so yearAgo.*Lb uses the household total
-// from a year ago — the year-over-year comparison is per-household on both sides.
+// KPI cards — current-year YTD pounds per household vs the same YTD period a year earlier.
+// Each row's lb/hh already divides that month's tonnage by that month's own household count,
+// so summing lb/hh across the year-to-date months gives cumulative pounds per household.
 const last = rows[rows.length-1];
-const yearAgo = rows[rows.length-13] || rows[0];   // 12 months back
-const monthNames = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June',
-Jul:'July', Aug:'August', Sep:'September', Oct:'October', Nov:'November', Dec:'December' };
-function fullMonth(m) { const [mon, yy] = m.split('-'); return `${monthNames[mon]} 20${yy}`; }
+const curYY = last.month.split('-')[1];                 // e.g. '26'
+const prevYY = String(+curYY - 1).padStart(2, '0');     // e.g. '25'
+const ytdRows = rows.filter(r => r.month.endsWith('-' + curYY));
+const ytdAbbrs = ytdRows.map(r => r.month.split('-')[0]);            // months present so far this year
+const prevYtdRows = rows.filter(r => r.month.endsWith('-' + prevYY) && ytdAbbrs.includes(r.month.split('-')[0]));
+const sumLb = (arr, key) => arr.reduce((s, r) => s + r[key], 0);
+const ytdRange = ytdAbbrs.length ? `${ytdAbbrs[0]}–${ytdAbbrs[ytdAbbrs.length - 1]}` : '';
 const kpis = [
-{ label: 'Trash', val: last.trashLb, prevVal: yearAgo.trashLb, color: colors.trash },
-{ label: 'Recycling', val: last.recLb, prevVal: yearAgo.recLb, color: colors.recycle },
-{ label: 'Yard Waste', val: last.yardLb, prevVal: yearAgo.yardLb, color: colors.yard },
+{ label: 'Trash', val: sumLb(ytdRows, 'trashLb'), prevVal: sumLb(prevYtdRows, 'trashLb'), color: colors.trash },
+{ label: 'Recycling', val: sumLb(ytdRows, 'recLb'), prevVal: sumLb(prevYtdRows, 'recLb'), color: colors.recycle },
+{ label: 'Yard Waste', val: sumLb(ytdRows, 'yardLb'), prevVal: sumLb(prevYtdRows, 'yardLb'), color: colors.yard },
 ];
 const kpiRow = document.getElementById('kpiRow');
 kpis.forEach(k => {
@@ -286,12 +288,12 @@ const diff = k.val - k.prevVal;
 const pct = k.prevVal ? (diff / k.prevVal * 100) : null;
 const arrow = pct === null ? '' : (Math.abs(pct) < 0.05 ? '→' : (diff > 0 ? '▲' : '▼'));
 const deltaText = pct === null
-? `— vs ${fullMonth(yearAgo.month)}`
-: `${arrow} ${Math.abs(pct).toFixed(1)}% vs ${fullMonth(yearAgo.month)}`;
+? `— vs 20${prevYY} YTD`
+: `${arrow} ${Math.abs(pct).toFixed(1)}% vs 20${prevYY} YTD (${ytdRange})`;
 const div = document.createElement('div');
 div.className = 'kpi-card';
 div.style.setProperty('--accent', k.color);
-div.innerHTML = `<div class="label">${k.label} · ${fullMonth(last.month)} (lb/hh)</div>
+div.innerHTML = `<div class="label">${k.label} · 20${curYY} YTD (lb/hh)</div>
 <div class="value">${k.val.toFixed(1)}</div>
 <div class="delta neutral">${deltaText}</div>`;
 kpiRow.appendChild(div);
