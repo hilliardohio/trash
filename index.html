@@ -133,7 +133,7 @@ details.collapsible[open] > summary .summary-hint { display: none; }
 
 <div class="panel">
 <h2>Hilliard's Diversion Rate vs Peer Communities</h2>
-<p class="sub">Share of collected material diverted from the landfill — (recycling + yard waste + food waste + pumpkins + brush &amp; leaf + Styrofoam) ÷ all material collected. Hilliard 2025 and 2026 are calculated live from this dashboard's data; Hilliard 2024 uses the city's provided annual totals; peer communities are reported figures (Upper Arlington 2025, other peers 2024).</p>
+<p class="sub">Share of collected material diverted from the landfill — (recycling + yard waste + food waste + pumpkins + brush &amp; leaf + Styrofoam) ÷ all material collected. Hilliard 2025 and 2026 are calculated live from this dashboard's data; Hilliard 2024 uses the city's provided annual totals; peer figures are reported or calculated from each city's tonnage (Upper Arlington, Gahanna &amp; Worthington 2025; Dublin &amp; Westerville 2024).</p>
 <div id="divCallout" class="eps-equiv" style="border-left-color: var(--yard); background:#F1F7EE; border-color:#DBEAD2;"></div>
 <div id="divLegend" class="chart-legend"></div>
 <div class="chart-box tall" id="divChart"></div>
@@ -598,6 +598,7 @@ const DUBLIN_GREEN = '#4C9A2A';
 const UA_YELLOW = '#F2B705';
 const WESTERVILLE_RED = '#C0392B';
 const GAHANNA_LTBLUE = '#6BAED6';
+const WORTHINGTON_PURPLE = '#8E44AD';
 const communities = [
 { name: 'Hilliard', year: 2026, rate: hilliard2026Rate, color: HILLIARD_BLUE },
 { name: 'Hilliard', year: 2025, rate: hilliard2025Rate, color: HILLIARD_BLUE },
@@ -605,7 +606,8 @@ const communities = [
 { name: 'Upper Arlington', year: 2025, rate: 0.40, color: UA_YELLOW, star: true },
 { name: 'Dublin', year: 2024, rate: 0.24, color: DUBLIN_GREEN },
 { name: 'Westerville', year: 2024, rate: 0.18, color: WESTERVILLE_RED },
-{ name: 'Gahanna', year: 2024, rate: 0.17, color: GAHANNA_LTBLUE },
+{ name: 'Gahanna', year: 2025, rate: 0.3275, color: GAHANNA_LTBLUE }, // (2,175.25 recycle + 2,323.92 yard waste) / 13,737.19 total = 32.8%
+{ name: 'Worthington', year: 2025, rate: 0.3617, color: WORTHINGTON_PURPLE }, // (1,262.50 recycle + 1,034.22 yard waste) / 6,350.52 total = 36.2%
 ];
 const divLabels = communities.map(c => `${c.name} '${String(c.year).slice(-2)}${c.star ? '*' : ''}`);
 const divColors = communities.map(c => c.color);
@@ -617,6 +619,7 @@ drawLegend('divLegend', [
 { name: 'Upper Arlington*', color: UA_YELLOW },
 { name: 'Westerville', color: WESTERVILLE_RED },
 { name: 'Gahanna', color: GAHANNA_LTBLUE },
+{ name: 'Worthington', color: WORTHINGTON_PURPLE },
 ]);
 
 // Infographic callout: prominent 2026 rate alongside 2025, with smaller supporting totals
