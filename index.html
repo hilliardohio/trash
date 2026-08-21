@@ -149,8 +149,8 @@ details.collapsible[open] > summary .summary-hint { display: none; }
 
 <div class="grid-2">
 <div class="panel">
-<h2>Estimated Households Served</h2>
-<p class="sub">Interpolated between two known invoice periods (see methodology)</p>
+<h2>Households Served</h2>
+<p class="sub">Quarterly average of estimated households, interpolated between two known invoice periods (see methodology)</p>
 <div class="chart-box tall" id="hhChart"></div>
 </div>
 <div class="panel">
@@ -420,10 +420,19 @@ drawBarChart('mainChart', labels, [
 { name: 'Yard Waste', color: colors.yard, data: rows.map(r => r.yardLb) },
 ], v => v.toFixed(0));
 
-// Households chart — fixed scale 7,500-15,000 (in 1,500 steps) and larger labels so month-to-month
-// changes (only ~150 households) read clearly against a full, honest axis
-drawBarChart('hhChart', labels, [
-{ name: 'Est. Households', color: '#1F4E78', data: rows.map(r => r.hh) },
+// Households chart — quarterly averages of the monthly estimates, so the trend
+// reads clearly without 18 near-identical monthly bars
+const hhQtrOfMonth = { Jan: 1, Feb: 1, Mar: 1, Apr: 2, May: 2, Jun: 2, Jul: 3, Aug: 3, Sep: 3, Oct: 4, Nov: 4, Dec: 4 };
+const hhQuarters = [];
+rows.forEach(r => {
+const [mon, yy] = r.month.split('-');
+const label = `Q${hhQtrOfMonth[mon]}-${yy}`;
+let q = hhQuarters.find(x => x.label === label);
+if (!q) hhQuarters.push(q = { label, sum: 0, n: 0 });
+q.sum += r.hh; q.n++;
+});
+drawBarChart('hhChart', hhQuarters.map(q => q.label), [
+{ name: 'Households Served', color: '#1F4E78', data: hhQuarters.map(q => q.sum / q.n) },
 ], v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), {
 min: 10000, max: 11000,
 tickValues: [10000, 10200, 10400, 10600, 10800, 11000],
