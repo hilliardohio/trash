@@ -133,11 +133,11 @@ details.collapsible[open] > summary .summary-hint { display: none; }
 
 <div class="panel">
 <h2>Hilliard's Diversion Rate vs Peer Communities</h2>
-<p class="sub">Share of collected material diverted from the landfill — (recycling + yard waste + food waste + pumpkins + brush &amp; leaf + Styrofoam) ÷ all material collected. Hilliard 2025 and 2026 are calculated live from this dashboard's data; peer figures are reported or calculated from each city's tonnage (Upper Arlington, Dublin, Gahanna &amp; Worthington 2025; Westerville 2024).</p>
+<p class="sub">Share of collected material diverted from the landfill — (recycling + yard waste + food waste + pumpkins + brush &amp; leaf + Styrofoam) ÷ all material collected. Hilliard 2025 and 2026 are calculated live from this dashboard's data; peer figures are reported or calculated from each city's tonnage (Upper Arlington, Dublin, Gahanna, Worthington &amp; Westerville 2025).</p>
 <div id="divCallout" class="eps-equiv" style="border-left-color: var(--yard); background:#F1F7EE; border-color:#DBEAD2;"></div>
 <div id="divLegend" class="chart-legend"></div>
 <div class="chart-box tall" id="divChart"></div>
-<p class="div-note">* Upper Arlington's diversion rate is 53% including leaf collection.<br>&dagger; Worthington's diversion rate is 49% including leaf collection.</p>
+<p class="div-note">* Upper Arlington's diversion rate is 53% including leaf collection.<br>&dagger; Worthington's diversion rate is 49% including leaf collection.<br>&Dagger; Westerville's diversion rate is 43.5% including leaf pick-up.</p>
 </div>
 
 <div class="panel">
@@ -272,10 +272,10 @@ const brushByMonth = { 'Apr-26': 18.15, 'May-26': 16.20, 'Jun-26': 24.60 };
 // Each row's lb/hh already divides that month's tonnage by that month's own household count,
 // so summing lb/hh across the year-to-date months gives cumulative pounds per household.
 const last = rows[rows.length-1];
-const curYY = last.month.split('-')[1];                 // e.g. '26'
-const prevYY = String(+curYY - 1).padStart(2, '0');     // e.g. '25'
+const curYY = last.month.split('-')[1]; // e.g. '26'
+const prevYY = String(+curYY - 1).padStart(2, '0'); // e.g. '25'
 const ytdRows = rows.filter(r => r.month.endsWith('-' + curYY));
-const ytdAbbrs = ytdRows.map(r => r.month.split('-')[0]);            // months present so far this year
+const ytdAbbrs = ytdRows.map(r => r.month.split('-')[0]); // months present so far this year
 const prevYtdRows = rows.filter(r => r.month.endsWith('-' + prevYY) && ytdAbbrs.includes(r.month.split('-')[0]));
 const sumLb = (arr, key) => arr.reduce((s, r) => s + r[key], 0);
 const ytdRange = ytdAbbrs.length ? `${ytdAbbrs[0]}–${ytdAbbrs[ytdAbbrs.length - 1]}` : '';
@@ -583,14 +583,14 @@ const total = diverted + trash;
 return { diverted, trash, total, rate: total > 0 ? diverted / total : 0 };
 }
 const brushTotal = brushData.reduce((s, v) => s + v, 0);
-const d2026 = yearDiversion('26', brushTotal);   // brush & leaf program runs in 2026
-const d2025 = yearDiversion('25', 0);            // no brush & leaf program in 2025
+const d2026 = yearDiversion('26', brushTotal); // brush & leaf program runs in 2026
+const d2025 = yearDiversion('25', 0); // no brush & leaf program in 2025
 const hilliard2026Rate = d2026.rate;
 const hilliard2025Rate = d2025.rate;
 
 // Community diversion rates with a distinct color per community.
 // Hilliard (both years) shown first, then peers by descending rate.
-const HILLIARD_BLUE = '#1F4E78';   // Hilliard Blue
+const HILLIARD_BLUE = '#1F4E78'; // Hilliard Blue
 const DUBLIN_GREEN = '#4C9A2A';
 const UA_YELLOW = '#F2B705';
 const WESTERVILLE_RED = '#C0392B';
@@ -601,7 +601,7 @@ const communities = [
 { name: 'Hilliard', year: 2025, rate: hilliard2025Rate, color: HILLIARD_BLUE },
 { name: 'Upper Arlington', year: 2025, rate: 0.40, color: UA_YELLOW, mark: '*' },
 { name: 'Dublin', year: 2025, rate: 0.44, color: DUBLIN_GREEN },
-{ name: 'Westerville', year: 2024, rate: 0.18, color: WESTERVILLE_RED },
+{ name: 'Westerville', year: 2025, rate: 0.342, color: WESTERVILLE_RED, mark: '‡' }, // 43.5% including leaf pick-up
 { name: 'Gahanna', year: 2025, rate: 0.3275, color: GAHANNA_LTBLUE }, // (2,175.25 recycle + 2,323.92 yard waste) / 13,737.19 total = 32.8%
 { name: 'Worthington', year: 2025, rate: 0.37, color: WORTHINGTON_PURPLE, mark: '†' }, // 37% reported; 49% including leaf collection
 ];
@@ -613,7 +613,7 @@ drawLegend('divLegend', [
 { name: 'Hilliard', color: HILLIARD_BLUE },
 { name: 'Dublin', color: DUBLIN_GREEN },
 { name: 'Upper Arlington*', color: UA_YELLOW },
-{ name: 'Westerville', color: WESTERVILLE_RED },
+{ name: 'Westerville‡', color: WESTERVILLE_RED },
 { name: 'Gahanna', color: GAHANNA_LTBLUE },
 { name: 'Worthington†', color: WORTHINGTON_PURPLE },
 ]);
