@@ -120,11 +120,11 @@ details.collapsible[open] > summary .summary-hint { display: none; }
 </style>
 </head>
 <body>
-<h2 class="sr-only">Dashboard showing City of Hilliard trash, recycling, yard waste, and food waste collected per household each month from January 2025 through June 2026, estimated household counts, brush and leaf pick-up tonnage for the 2026 season, Styrofoam (EPS) recycling shipments, and a data table of underlying figures.</h2>
+<h2 class="sr-only">Dashboard showing City of Hilliard trash, recycling, yard waste, and food waste collected per household each month from January 2025 through August 2026, estimated household counts, brush and leaf pick-up tonnage for the 2026 season, Styrofoam (EPS) recycling shipments, and a data table of underlying figures.</h2>
 
 <header>
 <h1>City of Hilliard — Collections Per Household</h1>
-<p>Solid waste, recycling &amp; yard waste, pounds per household by month · Jan 2025 – Jun 2026</p>
+<p>Solid waste, recycling &amp; yard waste, pounds per household by month · Jan 2025 – Aug 2026</p>
 </header>
 
 <div class="wrap">
@@ -229,7 +229,7 @@ details.collapsible[open] > summary .summary-hint { display: none; }
 </div>
 
 <footer>
-<strong>Methodology:</strong> Household counts are known for only two billing periods — Nov-2025 (10,739 = 8,062 RESI + 2,677 SENIOR curb-service units, per LWS invoice #1071703) and May-2026 (10,796 = 8,143 RESI + 2,653 SENIOR, per LWS invoice #1147620). All other months are linearly interpolated/extrapolated at the implied rate of +9.5 households/month, so per-household figures for those months are estimates, not billed counts. Pounds = tons × 2,000, divided by estimated households for that month. <strong>Brush &amp; leaf pick-up</strong> tonnage is estimated from chipper-truck loads (small chipper 6 CY/load, big chipper 16 CY/load) at an assumed 600 lbs per cubic yard for green chips fresh from the chipper, covering the Apr 13 – Jul 27, 2026 season to date; the Monthly Detail table lists the April–June figures that align with the solid-waste months (July's 10.80 tons appears in the chart above).
+<strong>Methodology:</strong> Household counts are known for only two billing periods — Nov-2025 (10,739 = 8,062 RESI + 2,677 SENIOR curb-service units, per LWS invoice #1071703) and May-2026 (10,796 = 8,143 RESI + 2,653 SENIOR, per LWS invoice #1147620). All other months are linearly interpolated/extrapolated at the implied rate of +9.5 households/month, so per-household figures for those months are estimates, not billed counts. Pounds = tons × 2,000, divided by estimated households for that month. <strong>Brush &amp; leaf pick-up</strong> tonnage is estimated from chipper-truck loads (small chipper 6 CY/load, big chipper 16 CY/load) at an assumed 600 lbs per cubic yard for green chips fresh from the chipper, covering the Apr 13 – Jul 27, 2026 season to date; the Monthly Detail table lists the April–July figures alongside the solid-waste months.
 </footer>
 </div>
 
@@ -255,6 +255,8 @@ const data = [
 ["Apr-26",734.32,191.61,273.96,3.08,10786.5],
 ["May-26",798.22,212.31,298.25,4.27,10796.0],
 ["Jun-26",960.75,234.91,268.05,5.05,10805.5],
+["Jul-26",758.81,191.49,155.25,4.09,10815.0],
+["Aug-26",789.67,222.19,239.81,5.22,10824.5],
 ];
 
 const rows = data.map(([m,trash,rec,yard,food,hh]) => ({
@@ -266,7 +268,7 @@ const labels = rows.map(r => r.month);
 const colors = { trash: '#E4572E', recycle: '#2E86AB', yard: '#4C9A2A', food: '#A67C52' };
 
 // Brush & leaf pick-up tonnage by month (2026 chipper season, estimated at 600 lbs/CY)
-const brushByMonth = { 'Apr-26': 18.15, 'May-26': 16.20, 'Jun-26': 24.60 };
+const brushByMonth = { 'Apr-26': 18.15, 'May-26': 16.20, 'Jun-26': 24.60, 'Jul-26': 10.80 };
 
 // KPI cards — current-year YTD pounds per household vs the same YTD period a year earlier.
 // Each row's lb/hh already divides that month's tonnage by that month's own household count,
